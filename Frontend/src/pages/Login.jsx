@@ -94,8 +94,8 @@ export default function Login() {
       password: "",
       name: "",
       confirmPassword: "",
-      lat: null,
-      long: null,
+      lat: 22.596720,
+      long: 72.834550,
     });
   };
 

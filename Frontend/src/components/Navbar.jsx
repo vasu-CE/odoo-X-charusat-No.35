@@ -43,12 +43,14 @@ function Navbar() {
             </Button>
           </Link>
 
-          <Link to="/store-cart">
-            <Button variant="outline" size="sm" className="">
-              <Store className="h-4 w-4 mr-2" />
-              Store
-            </Button>
-          </Link>
+          {!user?.isGoverment && 
+            <Link to="/store-cart">
+              <Button variant="outline" size="sm" className="">
+                <Store className="h-4 w-4 mr-2" />
+                Store
+              </Button>
+            </Link>
+          }
 
           <Link to="/login">
             <Button variant="outline" className="bg-blue-600 hover:bg-blue-500 text-white ">

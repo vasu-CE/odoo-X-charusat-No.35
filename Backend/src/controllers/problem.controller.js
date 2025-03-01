@@ -44,13 +44,13 @@ export const uploadProblem = async (req, res) => {
     }
 
     const imageUrl = req.file.path;
-    
+
     // Call Django API to classify text
     const category = await classifyText(description);
     // console.log(locationData)
     // Extract latitude and longitude from locationData and call ML API to get cluster ID
     const { lat, lng } = locationData;
-    console.log(lat,lng)
+    console.log(lat, lng);
     const clusterId = await getClusterId(lat, lng);
 
     const problem = await prisma.problem.create({
@@ -69,6 +69,15 @@ export const uploadProblem = async (req, res) => {
       },
     });
 
+    const updatedUser = await prisma.user.update({
+      where: { id: authorId },
+      data: {
+        coins: {
+          increment: 5,
+        },
+      },
+    });
+
     return res
       .status(200)
       .json(new ApiResponse(200, "Problem uploaded successfully", problem));
@@ -81,13 +90,21 @@ export const uploadProblem = async (req, res) => {
 export const getAllProblems = async (req, res) => {
   try {
     // const { clustorId } = req.body;
-    const {latitude , longitude} = req.query;
-    const clustorId=await getClusterId(latitude, longitude);
-    console.log(clustorId)
+    const { latitude, longitude } = req.query;
+    const clustorId = await getClusterId(latitude, longitude);
+    console.log(clustorId);
 
     const problems = await prisma.problem.findMany({
       where: {
         clustorId,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            profilePic: true,
+          },
+        },
       },
     });
 
@@ -109,29 +126,53 @@ export const voting = async (req, res) => {
     const userId = req.user.id;
 
     const existingVote = await prisma.vote.findFirst({
-      where: { userId, problemId }
+      where: { userId, problemId },
     });
+
+    let updatedProblem;
 
     if (existingVote) {
       await prisma.$transaction([
         prisma.vote.delete({ where: { id: existingVote.id } }),
         prisma.problem.update({
           where: { id: problemId },
-          data: { voteCount : { decrement: 1 } }
-        })
+          data: { voteCount: { decrement: 1 } },
+        }),
       ]);
 
-      return res.status(200).json(new ApiResponse(200, "Vote removed"));
+      updatedProblem = await prisma.problem.findUnique({
+        where: { id: problemId },
+        select: { voteCount: true },
+      });
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(200, "Vote removed", {
+            voteCount: updatedProblem.voteCount,
+          })
+        );
     } else {
       await prisma.$transaction([
         prisma.vote.create({ data: { userId, problemId } }),
         prisma.problem.update({
           where: { id: problemId },
-          data: { voteCount : { increment: 1 } }
-        })
+          data: { voteCount: { increment: 1 } },
+        }),
       ]);
 
-      return res.status(200).json(new ApiResponse(200, "Vote added"));
+      updatedProblem = await prisma.problem.findUnique({
+        where: { id: problemId },
+        select: { voteCount: true },
+      });
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(200, "Vote added", {
+            voteCount: updatedProblem.voteCount,
+          })
+        );
     }
   } catch (err) {
     return res.status(500).json(new ApiError(500, err.message));
@@ -151,77 +192,179 @@ export const checkUserVote = async (req, res) => {
     }
 
     const existingVote = await prisma.vote.findUnique({
-      where: { userId_problemId: { userId, problemId } } // Assuming composite unique constraint
+      where: {
+        userId_problemId: {
+          userId: Number(userId),
+          problemId: Number(problemId),
+        },
+      },
     });
 
-    return res.status(200).json(new ApiResponse(200, "Vote status retrieved", { isVoted: !!existingVote }));
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Vote status retrieved", {
+          isVoted: !!existingVote,
+        })
+      );
   } catch (err) {
     console.error("Error checking vote:", err);
     return res.status(500).json(new ApiError(500, "Internal Server Error"));
   }
 };
 
-
-
-export const rateProblem = async ( req , res) => {
+export const rateProblem = async (req, res) => {
   // console.log("HYy");
-    try{
-      const problemId = parseInt(req.params.id);
-      const userId = req.user.id;
-      const { rating } = req.body;
-      console.log(rating)
+  try {
+    const problemId = parseInt(req.params.id);
+    const userId = req.user.id;
+    const { rating } = req.body;
+    console.log(rating);
 
-      const existingRating = await prisma.rating.findFirst({
-        where : { userId , problemId }
-      })
-      console.log(existingRating)
+    const existingRating = await prisma.rating.findFirst({
+      where: { userId, problemId },
+    });
+    console.log(existingRating);
 
-      if(existingRating){
-        await prisma.rating.update({
-          where : { id : existingRating.id},
-          data : { rating }
-        })
-      }else{
-        await prisma.rating.create({
-          data : { userId , problemId , rating}
-        });
-      }
-
-      const { _avg } = await prisma.rating.aggregate({
-        where : { problemId },
-        _avg : { rating : true}
-      })
-
-      await prisma.problem.update({
-        where : { id : problemId},
-        data : { rating : _avg.rating || 0}
+    if (existingRating) {
+      await prisma.rating.update({
+        where: { id: existingRating.id },
+        data: { rating },
       });
-
-      return res.status(200).json(new ApiResponse(200, {}, { averageRating: _avg.rating }));
-
-    }catch(err){
-      return res.status(500).json(new ApiError(500 , err.message))
+    } else {
+      await prisma.rating.create({
+        data: { userId, problemId, rating },
+      });
     }
-}
 
-export const deleteProblem = async ( req , res) => {
-  try{
-    const problemId = parseInt(req.params.problemId); 
+    const { _avg } = await prisma.rating.aggregate({
+      where: { problemId },
+      _avg: { rating: true },
+    });
+
+    await prisma.problem.update({
+      where: { id: problemId },
+      data: { rating: _avg.rating || 0 },
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, { averageRating: _avg.rating }));
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, err.message));
+  }
+};
+
+export const deleteProblem = async (req, res) => {
+  try {
+    const problemId = parseInt(req.params.problemId);
     const userId = req.user.id;
 
     const problem = await prisma.problem.findFirst({
-      where : { id : problemId , userId }
-    })
-
-    if (!problem) {
-      return res.status(403).json(new ApiError(403, "You can't delete this problem"));
-    }
-    await prisma.problem.delete({
-      where : { id : problemId }
+      where: { id: problemId, userId },
     });
 
-    return res.status(200).json(new ApiResponse(200, "Problem deleted successfully"));
-  }catch(err){
-    return res.status(500).json(new ApiError(500 , err.message))
+    if (!problem) {
+      return res
+        .status(403)
+        .json(new ApiError(403, "You can't delete this problem"));
+    }
+    await prisma.problem.delete({
+      where: { id: problemId },
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Problem deleted successfully"));
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, err.message));
   }
-}
+};
+
+export const addOrUpdateRating = async (req, res) => {
+  try {
+    const { rating } = req.body;
+    const userId = req.user.id;
+    const problemId = parseInt(req.params.problemId);
+
+    // Check if user already rated
+    const existingRating = await prisma.rating.findFirst({
+      where: { userId, problemId },
+    });
+
+    if (existingRating) {
+      // Update existing rating
+      await prisma.rating.update({
+        where: { id: existingRating.id },
+        data: { rating },
+      });
+    } else {
+      // Create new rating
+      await prisma.rating.create({
+        data: { userId, problemId, rating },
+      });
+    }
+
+    // Recalculate average rating
+    const avgRating = await prisma.rating.aggregate({
+      where: { problemId },
+      _avg: { rating: true },
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Rating updated", {
+          averageRating: avgRating._avg.rating || 0,
+        })
+      );
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, err.message));
+  }
+};
+
+// API to Get Average Rating
+export const getAverageRating = async (req, res) => {
+  try {
+    const problemId = parseInt(req.params.problemId);
+
+    const avgRating = await prisma.rating.aggregate({
+      where: { problemId },
+      _avg: { rating: true },
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Average rating fetched", {
+          averageRating: avgRating._avg.rating || 0,
+        })
+      );
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, err.message));
+  }
+};
+
+export const fetchUserRating = async (req, res) => {
+  try {
+    const { problemId } = req.params;
+    const userId = req.user.id;
+    console.log(problemId, userId);
+
+    const rating = await prisma.rating.findUnique({
+      where: {
+        userId_problemId: {
+          userId: Number(userId),
+          problemId: Number(problemId),
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      userRating: rating ? rating.rating : 0,
+    });
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, error.message));
+  }
+};

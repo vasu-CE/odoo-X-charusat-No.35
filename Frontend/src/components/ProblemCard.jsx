@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -32,47 +32,107 @@ import { toast } from "sonner";
 import { deleteProblem } from "@/redux/problemSlice";
 
 function ProblemCard({ problem, isGovOfficial }) {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [userRating, setUserRating] = React.useState(0);
-  const [isVoted, setIsVoted] = React.useState(false);
-  const [voteCount, setVoteCount] = React.useState(problem.voteCount);
-  const [status, setStatus] = React.useState(problem.status);
-  const [progress, setProgress] = React.useState(0);
-  const [actionTaken, setActionTaken] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [isVoted, setIsVoted] = useState(false);
+  const [voteCount, setVoteCount] = useState(problem.voteCount);
+  const [status, setStatus] = useState(problem.status);
+  const [progress, setProgress] = useState(0);
+  const [actionTaken, setActionTaken] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const author = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
 
+  //for fetch vote status
   useEffect(() => {
+    let isMounted = true; // Prevents state update if component unmounts
+
     const fetchVoteStatus = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${BASE_URL}/issue/check/${problem.id}`, { withCredentials: true });
-        setIsVoted(response.data.data.isVoted);
-        console.log(isVoted)
+        const response = await axios.get(`${BASE_URL}/issue/check/${problem.id}`, {
+          withCredentials: true,
+        });
+
+        if (isMounted) {
+          setIsVoted(response.data.message.isVoted);
+          // console.log(response.data.message.isVoted)
+        }
       } catch (error) {
         console.error("Error fetching vote status:", error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchVoteStatus();
+
+    return () => {
+      isMounted = false; 
+    };
   }, [problem.id]);
 
-  const handleRating = (rating) => {
-    setUserRating(rating);
-  };
-
-    const handleVote =async () => {
+  //for average rating
+  useEffect(() => {
+    const fetchAverageRating = async () => {
       try {
-        const response = await axios.post(`${BASE_URL}/issue/voting/${problem.id}`, {}, { withCredentials: true });
-    
-        if (response.data.success) {
-          setVoteCount((prev) => (isVoted ? prev - 1 : prev + 1));
-          setIsVoted((prev) => !prev);
+        const { data } = await axios.get(`${BASE_URL}/issue/rating/${problem.id}` , {withCredentials : true});
+        // console.log("data" ,data)
+        setAverageRating(data.message.averageRating);
+      } catch (error) {
+        console.error("Error fetching average rating:", error.response?.data || error.message);
+      }
+    };
+
+    const fetchUserRating = async () => {
+      try {
+        const { data } = await axios.get(`${BASE_URL}/issue/user-rating/${problem.id}`, {
+          withCredentials: true,
+        });
+
+        if (data.success) {
+          setUserRating(data.userRating);
         }
       } catch (error) {
-        toast.error(error.message)
+        console.error("Error fetching user rating:", error.response?.data || error.message);
       }
+    };
+
+    fetchAverageRating();
+    fetchUserRating();
+  }, [problem.id]);
+
+  const handleRating = async (rating) => {
+    setUserRating(rating); 
+
+    try {
+      const { data } = await axios.post(`${BASE_URL}/issue/rating/${problem.id}`, { rating }, { withCredentials: true });
+      setAverageRating(data.message.averageRating); 
+    } catch (error) {
+      console.error("Error submitting rating:", error.response?.data || error.message);
+    }
+  };
+
+  const handleVote = async () => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/issue/voting/${problem.id}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        // setIsVoted((prev) => !prev);
+        setIsVoted((prev) => !prev);
+        setVoteCount((prev) => (isVoted ? prev - 1 : prev + 1));
+        // setVoteCount(response.data.message.voteCount);
+        // console.log(response.data.message.voteCount)
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   const handleActionTake = async () => {
@@ -80,7 +140,9 @@ function ProblemCard({ problem, isGovOfficial }) {
     setStatus("in-progress");
     setProgress(30);
 
-    const res = await axios.post(`${BASE_URL}/goverment/approve/${id}`, { withCredentials: true });
+    const res = await axios.post(`${BASE_URL}/goverment/approve/${id}`, {
+      withCredentials: true,
+    });
   };
 
   const handleStatusAction = async (action) => {
@@ -88,31 +150,41 @@ function ProblemCard({ problem, isGovOfficial }) {
     try {
       let endpoint;
       switch (action) {
-        case 'approve':
-          {console.log(problem.id)}
+        case "approve":
+          {
+            console.log(problem.id);
+          }
           endpoint = `${BASE_URL}/gov/approve/${problem.id}`;
           break;
-        case 'reject':
+        case "reject":
           endpoint = `${BASE_URL}/gov/reject/${problem.id}`;
           break;
-        case 'complete':
+        case "complete":
           endpoint = `${BASE_URL}/gov/complete/${problem.id}`;
           break;
         default:
-          throw new Error('Invalid action');
+          throw new Error("Invalid action");
       }
 
       const res = await axios.post(endpoint, {}, { withCredentials: true });
-      
+
       if (res.data.success) {
-        setStatus(action === 'approve' ? 'APPROVED' : 
-                 action === 'reject' ? 'REJECTED' : 
-                 action === 'complete' ? 'COMPLETED' : status);
-        
+        setStatus(
+          action === "approve"
+            ? "APPROVED"
+            : action === "reject"
+            ? "REJECTED"
+            : action === "complete"
+            ? "COMPLETED"
+            : status
+        );
+
         toast.success(
-          action === 'approve' ? 'Problem approved successfully' :
-          action === 'reject' ? 'Problem rejected successfully' :
-          'Problem marked as completed'
+          action === "approve"
+            ? "Problem approved successfully"
+            : action === "reject"
+            ? "Problem rejected successfully"
+            : "Problem marked as completed"
         );
       }
     } catch (err) {
@@ -134,13 +206,13 @@ function ProblemCard({ problem, isGovOfficial }) {
     }
 
     switch (status?.toUpperCase()) {
-      case 'REPORTED':
+      case "REPORTED":
         return (
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleStatusAction('approve')}
+              onClick={() => handleStatusAction("approve")}
               className="bg-green-600 hover:bg-green-500 text-white"
             >
               Approve
@@ -148,57 +220,51 @@ function ProblemCard({ problem, isGovOfficial }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleStatusAction('reject')}
+              onClick={() => handleStatusAction("reject")}
               className="bg-red-600 hover:bg-red-500 text-white"
             >
               Reject
             </Button>
           </div>
         );
-      
-      case 'IN_PROGRESS':
+
+      case "IN_PROGRESS":
         return (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleStatusAction('complete')}
+            onClick={() => handleStatusAction("complete")}
             className="bg-blue-600 hover:bg-blue-500 text-white"
           >
             Mark as Completed
           </Button>
         );
-      
-      case 'COMPLETED':
-        return (
-          <Badge className="bg-green-100 text-green-800">
-            Completed
-          </Badge>
-        );
-      
-      case 'REJECTED':
-        return (
-          <Badge className="bg-red-100 text-red-800">
-            Rejected
-          </Badge>
-        );
-      
+
+      case "COMPLETED":
+        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
+
+      case "REJECTED":
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+
       default:
         return null;
     }
   };
 
   const onDelete = async () => {
-    try{
-      const res = await axios.delete(`${BASE_URL}/issue/delete/${problem.id}` , {withCredentials : true})
+    try {
+      const res = await axios.delete(`${BASE_URL}/issue/delete/${problem.id}`, {
+        withCredentials: true,
+      });
 
-      if(res.data.success){
+      if (res.data.success) {
         dispatch(deleteProblem(problem.id));
         toast.success("Issue deleted successfully");
       }
-    }catch(err){
+    } catch (err) {
       toast.error(err.message);
     }
-  }
+  };
 
   return (
     <Card className="group overflow-hidden bg-white hover:shadow-2xl transition-all duration-300 rounded-xl border border-gray-100">
@@ -215,9 +281,9 @@ function ProblemCard({ problem, isGovOfficial }) {
         <div className="absolute top-4 left-4 flex gap-2">
           <Badge
             className={`px-3 py-1.5 text-sm font-medium rounded-full shadow-lg backdrop-blur-sm ${
-              problem.status === "open"
+              problem.status === "REPORTED"
                 ? "bg-red-500/90 text-white hover:bg-red-500"
-                : problem.status === "in-progress"
+                : problem.status === "IN_PROGRESS"
                 ? "bg-yellow-400/90 text-black/90 hover:bg-yellow-400/90"
                 : "bg-green-500/90 text-white hover:bg-green-500/90"
             }`}
@@ -249,7 +315,7 @@ function ProblemCard({ problem, isGovOfficial }) {
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Posted 2 days ago</span>
+                  <span>Posted 2 minutes ago</span>
                 </div>
               </div>
             </div>
@@ -267,15 +333,14 @@ function ProblemCard({ problem, isGovOfficial }) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Button variant="ghost">
-                      Edit Issue
-                      </Button>
-                    </DropdownMenuItem>
 
                     {!isGovOfficial && (
                       <DropdownMenuItem className="cursor-pointer text-red-500 hover:text-red-600">
-                        <Button variant="ghost" className="hover:text-red-600" onClick={onDelete}>
+                        <Button
+                          variant="ghost"
+                          className="hover:text-red-600"
+                          onClick={onDelete}
+                        >
                           Delete Issue
                         </Button>
                       </DropdownMenuItem>
@@ -294,15 +359,21 @@ function ProblemCard({ problem, isGovOfficial }) {
 
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-              <img
-                src={problem.authorAvatar || "/default-avatar.png"}
-                alt={problem.author}
-                className="w-full h-full object-cover"
-              />
+              {problem.authorAvatar ? (
+                <img
+                  src={problem?.user?.profilePic}
+                  alt={problem?.user?.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 text-[#333] flex items-center justify-center font-bold uppercase">
+                  {problem?.user?.name?.slice(0, 2)}
+                </div>
+              )}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">
-                {problem.author}
+                {problem?.user?.name || "Vasu"}
               </p>
               <p className="text-xs text-gray-500">Community Member</p>
             </div>
@@ -326,7 +397,7 @@ function ProblemCard({ problem, isGovOfficial }) {
                     />
                   ))}
                   <span className="text-sm text-gray-600 ml-2">
-                    ({problem.rating || 0})
+                  <p className="mt-2 text-sm text-gray-600">({averageRating || 0})</p>
                   </span>
                 </>
               )}
@@ -343,7 +414,9 @@ function ProblemCard({ problem, isGovOfficial }) {
                     : "hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <ThumbsUp className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`} />
+                <ThumbsUp
+                  className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`}
+                />
                 <span>{voteCount}</span>
               </Button>
             ) : (

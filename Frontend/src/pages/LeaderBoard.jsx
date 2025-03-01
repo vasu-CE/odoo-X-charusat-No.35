@@ -8,12 +8,12 @@ import axios from "axios";
 import { BASE_URL } from "@/lib/constant";
 
 const leaderboardData = [
-  { rank: 1, name: "Meetpidev", score: 101, solvedProblems: 12, profilePic: "https://github.com/shadcn.png" },
-  { rank: 2, name: "vasu-CE", score: 97, solvedProblems: 11, profilePic: "https://github.com/shadcn.png" },
-  { rank: 3, name: "MitM123", score: 90, solvedProblems: 8, profilePic: "https://github.com/shadcn.png" },
-  { rank: 4, name: "DhruvKO07", score: 88, solvedProblems: 8, profilePic: "https://github.com/shadcn.png" },
-  { rank: 5, name: "soni-shashan", score: 66, solvedProblems: 7, profilePic: "https://github.com/shadcn.png" },
-  { rank: 6, name: "nandit27", score: 50, solvedProblems: 6, profilePic: "https://github.com/shadcn.png" },
+  { rank: 1, name: "Meetpidev", score: 101, ReportedProblem: 12, profilePic: "https://github.com/shadcn.png" },
+  { rank: 2, name: "vasu-CE", score: 97, ReportedProblem: 11, profilePic: "https://github.com/shadcn.png" },
+  { rank: 3, name: "MitM123", score: 90, ReportedProblem: 8, profilePic: "https://github.com/shadcn.png" },
+  { rank: 4, name: "DhruvKO07", score: 88, ReportedProblem: 8, profilePic: "https://github.com/shadcn.png" },
+  { rank: 5, name: "soni-shashan", score: 66, ReportedProblem: 7, profilePic: "https://github.com/shadcn.png" },
+  { rank: 6, name: "nandit27", score: 50, ReportedProblem: 6, profilePic: "https://github.com/shadcn.png" },
 ];
 
 
@@ -72,7 +72,7 @@ const Leaderboard = () => {
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
             <p className="text-muted-foreground">
-              Top contributors ranked by score and solved solvedProblemss
+              Top contributors ranked by score and solved ReportedProblems
             </p>
           </div>
           <div className="w-full md:w-auto">
@@ -124,8 +124,8 @@ const Leaderboard = () => {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{user.solvedProblems}</span>
-                    <Badge variant="outline">solved</Badge>
+                    <span className="font-medium">{user.ReportedProblem}</span>
+                    <Badge variant="outline">Reported</Badge>
                   </div>
                 </div>
               );

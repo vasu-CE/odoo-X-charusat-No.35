@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Coins, Sparkles, Crown, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
 
 const items = [
   {
@@ -38,6 +39,8 @@ const items = [
 
 const StoreItem = ({ item, index }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const user = useSelector((state) => state.user?.user) || { coins: 0 };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -47,12 +50,12 @@ const StoreItem = ({ item, index }) => {
       <Card
         className={`relative overflow-hidden transform transition-all duration-300 ${
           isHovered ? "scale-105" : ""
-        } ${item.popular ? "border-2 border-purple-500" : ""}`}
+        } ${item.popular ? "border-2 border-blue-500" : ""}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {item.popular && (
-          <div className="absolute top-4 right-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+          <div className="absolute top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
             Popular
           </div>
         )}
@@ -65,13 +68,14 @@ const StoreItem = ({ item, index }) => {
           <img
             src={item.image}
             alt={item.title}
+            loading="lazy"
             className="w-full h-full object-cover transform transition-transform duration-300 hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
         <CardHeader className="relative z-10">
           <div className="flex items-center space-x-2">
-            <item.icon className="w-5 h-5 text-purple-500" />
+            <item.icon className="w-5 h-5 text-blue-500" />
             <CardTitle className="text-xl font-bold">{item.title}</CardTitle>
           </div>
           <p className="text-sm text-gray-500">{item.category}</p>
@@ -79,13 +83,13 @@ const StoreItem = ({ item, index }) => {
         <CardContent>
           <p className="text-sm text-gray-600 mb-4">{item.description}</p>
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2 bg-purple-100 px-3 py-1 rounded-full">
-              <Coins className="w-4 h-4 text-purple-600" />
-              <span className="font-semibold text-purple-600">{item.price}</span>
+            <div className="flex items-center space-x-2 bg-blue-100 px-3 py-1 rounded-full">
+              <Coins className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-blue-600">{item.price}</span>
             </div>
             <Button
-              className={`bg-purple-600 hover:bg-purple-700 transition-all duration-300 ${
-                isHovered ? "shadow-lg" : ""
+              className={`transition-all duration-300 ${
+                isHovered ? "shadow-lg bg-blue-700" : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
               Purchase
@@ -96,9 +100,12 @@ const StoreItem = ({ item, index }) => {
     </motion.div>
   );
 };
+
 export default function StorePage() {
+  const user = useSelector((state) => state.user?.user) || { coins: 0 };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-12">
         <motion.div
@@ -106,11 +113,11 @@ export default function StorePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-purple-900 mb-4">
+          <h1 className="text-4xl font-bold text-blue-700 mb-4">
             Welcome to the Store
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Unlock exclusive items and customize your experience with our premium collection
+            Unlock exclusive items and customize your experience with our premium collection.
           </p>
         </motion.div>
 
@@ -120,11 +127,13 @@ export default function StorePage() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex justify-center mt-8"
         >
-          <div className="bg-white border-2 border-purple-200 rounded-full px-6 py-3 shadow-lg flex items-center space-x-3">
-            <div className="bg-purple-100 p-2 rounded-full">
-              <Coins className="w-6 h-6 text-purple-600" />
+          <div className="bg-white border-2 border-blue-200 rounded-full px-6 py-3 shadow-lg flex items-center space-x-3">
+            <div className="bg-blue-100 p-2 rounded-full">
+              <Coins className="w-6 h-6 text-blue-600" />
             </div>
-            <span className="text-xl font-bold text-purple-900">1,000 Coins</span>
+            <span className="text-xl font-bold text-blue-900">
+              {user.coins} Coins
+            </span>
           </div>
         </motion.div>
       </div>
@@ -142,11 +151,11 @@ export default function StorePage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto mt-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center"
+        className="max-w-7xl mx-auto mt-16 bg-gradient-to-r from-blue-600 to-blue-600 rounded-2xl p-8 text-white text-center"
       >
         <h2 className="text-2xl font-bold mb-2">Special Offer!</h2>
         <p className="mb-4">Get 20% extra coins on your next purchase</p>
-        <Button className="bg-white text-purple-600 hover:bg-gray-100">
+        <Button className="bg-white text-blue-600 hover:bg-gray-100">
           Buy Coins
         </Button>
       </motion.div>

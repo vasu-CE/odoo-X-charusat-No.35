@@ -80,11 +80,6 @@ export default function ProblemItem() {
   const [isLoading, setIsLoading] = useState(false);
 
   const problems = useSelector((state) => state.problem.problems);
-  const calculateAverageRating = (ratings) => {
-    if (ratings.length === 0) return 0;
-    const total = ratings.reduce((acc, rating) => acc + rating, 0);
-    return (total / ratings.length).toFixed(1);
-  };
 
   const filteredProblems = React.useMemo(() => {
     return problems?.filter(

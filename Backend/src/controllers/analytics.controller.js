@@ -10,13 +10,14 @@ export const leaderBoard = async ( req , res) => {
         const authorId = req.user.id;
 
         const author = await prisma.user.findFirst({
-            where : { id : authorId },
-            select : { city : true }
+          where : { id : authorId },
+          select : { city : true }
         })
 
         const users = await prisma.user.findMany({
             where : {
-                city : author.city
+              city : author.city,
+              isGoverment : false
             },
             include : {
                 problems : {
@@ -32,20 +33,21 @@ export const leaderBoard = async ( req , res) => {
             let totalVotes = 0;
             let totalRatings = 0;
             let ratingCount = 0;
-            let solvedProblems = 0;
+            let ReportedProblem = 0;
+            let coins = user.coins
         
             user.problems.forEach((problem) => {
               totalVotes += problem.votes.length;
               totalRatings += problem.Rating.reduce((sum, r) => sum + r.rating, 0);
               ratingCount += problem.Rating.length;
         
-              if (problem.status === "ACCEPTED") {
-                solvedProblems++;
+              if (problem.status === "REPORTED") {
+                ReportedProblem++;
               }
             });
-            console.log(solvedProblems)
+            console.log(ReportedProblem)
             const avgRating = ratingCount > 0 ? totalRatings / ratingCount : 0;
-            const score = totalVotes + avgRating * 2 + solvedProblems * 3;
+            const score = totalVotes + avgRating * 2 + coins * 3;
         
             return {
               id: user.id,
@@ -53,7 +55,7 @@ export const leaderBoard = async ( req , res) => {
               profilePic: user.profilePic,
               totalVotes,
               avgRating: avgRating.toFixed(1),
-              solvedProblems,
+              ReportedProblem,
               score: score.toFixed(2)
             };
           });
