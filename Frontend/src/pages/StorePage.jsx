@@ -1,9 +1,155 @@
-import React from 'react'
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Coins, Sparkles, Crown, Star } from "lucide-react";
+import { motion } from "framer-motion";
 
-function StorePage() {
+const items = [
+  {
+    id: 1,
+    title: "Premium Avatar",
+    category: "Avatars",
+    price: 300,
+    image: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=375&q=80",
+    icon: Crown,
+    description: "Stand out with this exclusive premium avatar",
+    popular: true,
+  },
+  {
+    id: 2,
+    title: "Galaxy Background",
+    category: "Backgrounds",
+    price: 500,
+    image: "https://images.unsplash.com/photo-1539721972319-f0e80a00d424?ixlib=rb-1.2.1&auto=format&fit=crop&w=375&q=80",
+    icon: Sparkles,
+    description: "Transform your profile with this stunning galaxy theme",
+  },
+  {
+    id: 3,
+    title: "Elite Badge",
+    category: "Badges",
+    price: 200,
+    image: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=375&q=80",
+    icon: Star,
+    description: "Show off your status with this elite badge",
+    featured: true,
+  },
+];
+
+const StoreItem = ({ item, index }) => {
+  const [isHovered, setIsHovered] = useState(false);
   return (
-    <div>Store</div>
-  )
-}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+    >
+      <Card
+        className={`relative overflow-hidden transform transition-all duration-300 ${
+          isHovered ? "scale-105" : ""
+        } ${item.popular ? "border-2 border-purple-500" : ""}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {item.popular && (
+          <div className="absolute top-4 right-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+            Popular
+          </div>
+        )}
+        {item.featured && (
+          <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+            Featured
+          </div>
+        )}
+        <div className="relative h-48 overflow-hidden">
+          <img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover transform transition-transform duration-300 hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+        <CardHeader className="relative z-10">
+          <div className="flex items-center space-x-2">
+            <item.icon className="w-5 h-5 text-purple-500" />
+            <CardTitle className="text-xl font-bold">{item.title}</CardTitle>
+          </div>
+          <p className="text-sm text-gray-500">{item.category}</p>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-4">{item.description}</p>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2 bg-purple-100 px-3 py-1 rounded-full">
+              <Coins className="w-4 h-4 text-purple-600" />
+              <span className="font-semibold text-purple-600">{item.price}</span>
+            </div>
+            <Button
+              className={`bg-purple-600 hover:bg-purple-700 transition-all duration-300 ${
+                isHovered ? "shadow-lg" : ""
+              }`}
+            >
+              Purchase
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+export default function StorePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold text-purple-900 mb-4">
+            Welcome to the Store
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Unlock exclusive items and customize your experience with our premium collection
+          </p>
+        </motion.div>
 
-export default StorePage
+        {/* Coins Display */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex justify-center mt-8"
+        >
+          <div className="bg-white border-2 border-purple-200 rounded-full px-6 py-3 shadow-lg flex items-center space-x-3">
+            <div className="bg-purple-100 p-2 rounded-full">
+              <Coins className="w-6 h-6 text-purple-600" />
+            </div>
+            <span className="text-xl font-bold text-purple-900">1,000 Coins</span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Store Items Grid */}
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {items.map((item, index) => (
+            <StoreItem key={item.id} item={item} index={index} />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-7xl mx-auto mt-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center"
+      >
+        <h2 className="text-2xl font-bold mb-2">Special Offer!</h2>
+        <p className="mb-4">Get 20% extra coins on your next purchase</p>
+        <Button className="bg-white text-purple-600 hover:bg-gray-100">
+          Buy Coins
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
