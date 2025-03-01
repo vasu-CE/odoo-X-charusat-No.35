@@ -1,22 +1,27 @@
-import numpy as np
+import os
 import joblib
+import numpy as np
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Load the trained nearest neighbors model and district names
 ml_model_path = os.path.join(BASE_DIR, "ml_api", "nearest_neighbors.pkl")  # Load ML Model
 districts_path = os.path.join(BASE_DIR, "ml_api", "districts.pkl")  # Load Districts List
 
+# Check if the files exist before loading
+if not os.path.exists(ml_model_path):
+    print(f"❌ Error: Model file not found at {ml_model_path}")
+if not os.path.exists(districts_path):
+    print(f"❌ Error: Districts file not found at {districts_path}")
+
 try:
-    nn = joblib.load(ml_model_path)  # Load trained nearest neighbors model
-    districts = joblib.load(districts_path)  # Load list of district names
+    nn = joblib.load(ml_model_path) if os.path.exists(ml_model_path) else None
+    districts = joblib.load(districts_path) if os.path.exists(districts_path) else None
 except Exception as e:
     nn = None
     districts = None
-    print(f"Error loading model: {e}")  # Print error for debugging
+    print(f"❌ Error loading model: {e}")  # Print error for debugging
 
 @api_view(["GET"])
 def predict(request):
@@ -29,9 +34,7 @@ def predict(request):
 
         new_point = np.array([[latitude, longitude]])
         _, nearest_idx = nn.kneighbors(new_point)
-        nearest_district = districts[nearest_idx[0][0]]
-
-        return Response({"nearest_district": nearest_district})
+        return Response({"nearest_district": nearest_idx[0][0]})
 
     except (TypeError, ValueError):
         return Response({"error": "Invalid input. Provide latitude and longitude as query parameters."}, status=400)

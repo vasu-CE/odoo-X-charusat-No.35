@@ -1,28 +1,64 @@
 import prisma from "../utils/prismClient.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import axios from "axios";
 
+const TEXT_CLASSIFICATION_API_URL = "http://127.0.0.1:8000/api2/analyze/"; // Update with your Django API URL for text classification
+const ML_CLUSTER_API_URL = "http://127.0.0.1:8000/api1/predict/"; // Django API URL for ML clustering prediction
+
+// Function to classify text using Django API
+const classifyText = async (text) => {
+  try {
+    const response = await axios.post(TEXT_CLASSIFICATION_API_URL, { text });
+    return response.data.text_category || "Other";
+  } catch (error) {
+    console.error("Error classifying text:", error.message);
+    return "Other";
+  }
+};
+
+// Function to get cluster ID using Django ML API
+const getClusterId = async (latitude, longitude) => {
+  try {
+    const response = await axios.get(ML_CLUSTER_API_URL, {
+      params: { latitude, longitude },
+    });
+    // Assuming the Django API returns the cluster ID in "nearest_district"
+    return response.data.nearest_district;
+  } catch (error) {
+    console.error("Error getting cluster ID:", error.message);
+    // Return a default cluster id if an error occurs
+    return 1;
+  }
+};
+
+// Upload problem with text classification and ML cluster ID
 export const uploadProblem = async (req, res) => {
   try {
     const { title, description } = req.body;
     const locationData = JSON.parse(req.body.location);
-
     const authorId = req.user.id;
 
     if (!title || !description || !locationData || !req.file) {
-      return res.status(404).json(404, "All fields are required");
+      return res.status(400).json(new ApiError(400, "All fields are required"));
     }
 
     const imageUrl = req.file.path;
-
-    const category = "INFRASTURCTURE";
+    
+    // Call Django API to classify text
+    const category = await classifyText(description);
+    // console.log(locationData)
+    // Extract latitude and longitude from locationData and call ML API to get cluster ID
+    const { lat, lng } = locationData;
+    console.log(lat,lng)
+    const clusterId = await getClusterId(lat, lng);
 
     const problem = await prisma.problem.create({
       data: {
         title,
         description,
         location: JSON.stringify(locationData),
-        clustorId: 1,
+        clustorId: clusterId, // Using the ML model cluster id
         image: imageUrl,
         category,
         user: {

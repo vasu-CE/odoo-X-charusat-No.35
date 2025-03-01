@@ -16,7 +16,7 @@ enum Status {
 
 enum Category {
   INFRASTURCTURE
-  ENVIROUNMENT
+  ENVIRONMENT
   COMMUNITY_SERVICES
   OTHER
 }
