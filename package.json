@@ -1,9 +1,4 @@
 {
-<<<<<<< HEAD
-  "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "dotenv": "^16.4.7"
-=======
   "name": "shadcn",
   "private": true,
   "version": "0.0.0",
@@ -62,6 +57,5 @@
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.1",
     "vite": "^6.0.1"
->>>>>>> 959a6d9e873dbdc8a8e2f695776c9a643be45f3c
   }
 }
