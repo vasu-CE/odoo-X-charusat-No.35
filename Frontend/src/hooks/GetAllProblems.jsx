@@ -7,13 +7,15 @@ import { useDispatch } from 'react-redux';
 function GetAllProblems() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchProblems = async (latitude, longitude) => {
       try {
-        const response = await axios.get(`${BASE_URL}/issue/all-problem`, { withCredentials: true });
+        const response = await axios.get(`${BASE_URL}/issue/all-problem`, {
+          withCredentials: true,
+          params: { latitude, longitude }, 
+        });
 
         if (response.data.success) {
           console.log(response.data);
@@ -26,8 +28,24 @@ function GetAllProblems() {
       }
     };
 
-    fetchProblems();
-  }, [dispatch]); 
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          fetchProblems(latitude, longitude); // Fetch problems with location
+        },
+        (error) => {
+          fetchProblems(22.596720 , 72.834550)
+          setError("Location access denied or unavailable");
+          setLoading(false);
+        }
+      );
+    } else {
+      fetchProblems(22.596720 , 72.834550)
+      setError("Geolocation is not supported by your browser");
+      setLoading(false);
+    }
+  }, [dispatch]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
