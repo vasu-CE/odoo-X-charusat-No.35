@@ -80,7 +80,10 @@ export const uploadProblem = async (req, res) => {
 
 export const getAllProblems = async (req, res) => {
   try {
-    const { clustorId } = req.body;
+    // const { clustorId } = req.body;
+    const {latitude , longitude} = req.query;
+    const clustorId=await getClusterId(latitude, longitude);
+    console.log(clustorId)
 
     const problems = await prisma.problem.findMany({
       where: {
