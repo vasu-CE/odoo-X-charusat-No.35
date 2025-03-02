@@ -23,6 +23,7 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import GetAllProblems from "@/hooks/GetAllProblems";
 
 const problems = [
   {
@@ -58,10 +59,10 @@ const categories = [
   "ENVIROUNMENT",
   "COMMUNITY_SERVICES",
 ];
-const statuses = ["All", "open", "in-progress", "resolved"];
+const statuses = ["All", "REPORTED", "IN_PROGRESS", "COMPLETED"];
 
 export default function ProblemItem() {
-  
+
   const user = useSelector((state) => state.user.user);
   const [role, setRole] = useState("user");
   useEffect(() => {
@@ -82,13 +83,14 @@ export default function ProblemItem() {
   const problems = useSelector((state) => state.problem.problems);
 
   const filteredProblems = React.useMemo(() => {
-    return problems?.filter(
+    return (problems || []).filter(
       (problem) =>
         (selectedCategory === "All" || problem.category === selectedCategory) &&
         (selectedStatus === "All" || problem.status === selectedStatus) &&
         problem.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [selectedCategory, selectedStatus, searchQuery]);
+  }, [problems, selectedCategory, selectedStatus, searchQuery]);
+  
 
   const sortedProblems = React.useMemo(() => {
     const sorted = [...filteredProblems];
@@ -137,7 +139,7 @@ export default function ProblemItem() {
                         onClick={() => setSelectedCategory(category)}
                       >
                         <span className="flex items-center gap-2">
-                          {category.toLowerCase()}
+                        {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
                           <Badge variant="outline" className="ml-auto">
                             {
                               problems?.filter(
@@ -173,7 +175,7 @@ export default function ProblemItem() {
                         onClick={() => setSelectedStatus(status)}
                       >
                         <span className="flex items-center gap-2">
-                          {status}
+                        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
                           <Badge variant="outline" className="ml-auto">
                             {
                               problems?.filter(

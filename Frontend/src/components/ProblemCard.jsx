@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -21,8 +20,6 @@ import {
   ThumbsUp,
   Clock,
   Calendar,
-  MessageCircle,
-  Share2,
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useDispatch, useSelector } from "react-redux";
@@ -38,27 +35,23 @@ function ProblemCard({ problem, isGovOfficial }) {
   const [isVoted, setIsVoted] = useState(false);
   const [voteCount, setVoteCount] = useState(problem.voteCount);
   const [status, setStatus] = useState(problem.status);
-  const [progress, setProgress] = useState(0);
-  const [actionTaken, setActionTaken] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const author = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
 
-  //for fetch vote status
+  // Fetch vote status
   useEffect(() => {
-    let isMounted = true; // Prevents state update if component unmounts
-
+    let isMounted = true;
     const fetchVoteStatus = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${BASE_URL}/issue/check/${problem.id}`, {
-          withCredentials: true,
-        });
-
+        const response = await axios.get(
+          `${BASE_URL}/issue/check/${problem.id}`,
+          { withCredentials: true }
+        );
         if (isMounted) {
           setIsVoted(response.data.message.isVoted);
-          // console.log(response.data.message.isVoted)
         }
       } catch (error) {
         console.error("Error fetching vote status:", error);
@@ -68,35 +61,42 @@ function ProblemCard({ problem, isGovOfficial }) {
     };
 
     fetchVoteStatus();
-
     return () => {
-      isMounted = false; 
+      isMounted = false;
     };
   }, [problem.id]);
 
-  //for average rating
+  // Fetch average rating and user rating
   useEffect(() => {
     const fetchAverageRating = async () => {
       try {
-        const { data } = await axios.get(`${BASE_URL}/issue/rating/${problem.id}` , {withCredentials : true});
-        // console.log("data" ,data)
+        const { data } = await axios.get(
+          `${BASE_URL}/issue/rating/${problem.id}`,
+          { withCredentials: true }
+        );
         setAverageRating(data.message.averageRating);
       } catch (error) {
-        console.error("Error fetching average rating:", error.response?.data || error.message);
+        console.error(
+          "Error fetching average rating:",
+          error.response?.data || error.message
+        );
       }
     };
 
     const fetchUserRating = async () => {
       try {
-        const { data } = await axios.get(`${BASE_URL}/issue/user-rating/${problem.id}`, {
-          withCredentials: true,
-        });
-
+        const { data } = await axios.get(
+          `${BASE_URL}/issue/user-rating/${problem.id}`,
+          { withCredentials: true }
+        );
         if (data.success) {
           setUserRating(data.userRating);
         }
       } catch (error) {
-        console.error("Error fetching user rating:", error.response?.data || error.message);
+        console.error(
+          "Error fetching user rating:",
+          error.response?.data || error.message
+        );
       }
     };
 
@@ -105,13 +105,19 @@ function ProblemCard({ problem, isGovOfficial }) {
   }, [problem.id]);
 
   const handleRating = async (rating) => {
-    setUserRating(rating); 
-
+    setUserRating(rating);
     try {
-      const { data } = await axios.post(`${BASE_URL}/issue/rating/${problem.id}`, { rating }, { withCredentials: true });
-      setAverageRating(data.message.averageRating); 
+      const { data } = await axios.post(
+        `${BASE_URL}/issue/rating/${problem.id}`,
+        { rating },
+        { withCredentials: true }
+      );
+      setAverageRating(data.message.averageRating);
     } catch (error) {
-      console.error("Error submitting rating:", error.response?.data || error.message);
+      console.error(
+        "Error submitting rating:",
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -122,38 +128,22 @@ function ProblemCard({ problem, isGovOfficial }) {
         {},
         { withCredentials: true }
       );
-
       if (response.data.success) {
-        // setIsVoted((prev) => !prev);
         setIsVoted((prev) => !prev);
         setVoteCount((prev) => (isVoted ? prev - 1 : prev + 1));
-        // setVoteCount(response.data.message.voteCount);
-        // console.log(response.data.message.voteCount)
       }
     } catch (error) {
       toast.error(error.message);
     }
   };
 
-  const handleActionTake = async () => {
-    setActionTaken(true);
-    setStatus("in-progress");
-    setProgress(30);
-
-    const res = await axios.post(`${BASE_URL}/goverment/approve/${id}`, {
-      withCredentials: true,
-    });
-  };
-
+  // Handle government actions: approve, reject, mark as completed
   const handleStatusAction = async (action) => {
     setLoading(true);
     try {
       let endpoint;
       switch (action) {
         case "approve":
-          {
-            console.log(problem.id);
-          }
           endpoint = `${BASE_URL}/gov/approve/${problem.id}`;
           break;
         case "reject":
@@ -165,20 +155,18 @@ function ProblemCard({ problem, isGovOfficial }) {
         default:
           throw new Error("Invalid action");
       }
-
+      {console.log(endpoint)}
       const res = await axios.post(endpoint, {}, { withCredentials: true });
-
       if (res.data.success) {
         setStatus(
           action === "approve"
-            ? "APPROVED"
+            ? "IN_PROGRESS"
             : action === "reject"
             ? "REJECTED"
             : action === "complete"
             ? "COMPLETED"
             : status
         );
-
         toast.success(
           action === "approve"
             ? "Problem approved successfully"
@@ -194,9 +182,9 @@ function ProblemCard({ problem, isGovOfficial }) {
     }
   };
 
+  // Render government action buttons based on current status
   const renderActionButton = () => {
     if (!isGovOfficial) return null;
-
     if (loading) {
       return (
         <Button disabled className="flex items-center gap-2">
@@ -204,7 +192,6 @@ function ProblemCard({ problem, isGovOfficial }) {
         </Button>
       );
     }
-
     switch (status?.toUpperCase()) {
       case "REPORTED":
         return (
@@ -227,7 +214,6 @@ function ProblemCard({ problem, isGovOfficial }) {
             </Button>
           </div>
         );
-
       case "IN_PROGRESS":
         return (
           <Button
@@ -239,13 +225,14 @@ function ProblemCard({ problem, isGovOfficial }) {
             Mark as Completed
           </Button>
         );
-
       case "COMPLETED":
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-
+        return (
+          <Badge className="bg-green-100 text-green-800">Completed</Badge>
+        );
       case "REJECTED":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-
+        return (
+          <Badge className="bg-red-100 text-red-800">Rejected</Badge>
+        );
       default:
         return null;
     }
@@ -253,10 +240,10 @@ function ProblemCard({ problem, isGovOfficial }) {
 
   const onDelete = async () => {
     try {
-      const res = await axios.delete(`${BASE_URL}/issue/delete/${problem.id}`, {
-        withCredentials: true,
-      });
-
+      const res = await axios.delete(
+        `${BASE_URL}/issue/delete/${problem.id}`,
+        { withCredentials: true }
+      );
       if (res.data.success) {
         dispatch(deleteProblem(problem.id));
         toast.success("Issue deleted successfully");
@@ -275,22 +262,28 @@ function ProblemCard({ problem, isGovOfficial }) {
           className="absolute inset-0 h-full w-full object-cover"
           animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.4 }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
         <div className="absolute top-4 left-4 flex gap-2">
           <Badge
             className={`px-3 py-1.5 text-sm font-medium rounded-full shadow-lg backdrop-blur-sm ${
-              problem.status === "REPORTED"
+              status === "REPORTED"
                 ? "bg-red-500/90 text-white hover:bg-red-500"
-                : problem.status === "IN_PROGRESS"
+                : status === "IN_PROGRESS"
                 ? "bg-yellow-400/90 text-black/90 hover:bg-yellow-400/90"
-                : "bg-green-500/90 text-white hover:bg-green-500/90"
+                : status === "COMPLETED"
+                ? "bg-green-500/90 text-white hover:bg-green-500/90"
+                : status === "REJECTED"
+                ? "bg-gray-500/90 text-white hover:bg-gray-500/90"
+                : "bg-gray-500/90 text-white hover:bg-gray-500/90"
             }`}
           >
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" />
-              {problem.status}
+              {status}
             </div>
           </Badge>
         </div>
@@ -320,20 +313,15 @@ function ProblemCard({ problem, isGovOfficial }) {
               </div>
             </div>
 
-            {problem.userId == author.id && !author.isGoverment && (
+            {problem.userId === author.id && !author.isGoverment && (
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                    >
+                    <Button variant="ghost" size="icon" className="rounded-full">
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-
                     {!isGovOfficial && (
                       <DropdownMenuItem className="cursor-pointer text-red-500 hover:text-red-600">
                         <Button
@@ -397,7 +385,9 @@ function ProblemCard({ problem, isGovOfficial }) {
                     />
                   ))}
                   <span className="text-sm text-gray-600 ml-2">
-                  <p className="mt-2 text-sm text-gray-600">({averageRating || 0})</p>
+                    <p className="mt-2 text-sm text-gray-600">
+                      ({averageRating || 0})
+                    </p>
                   </span>
                 </>
               )}
@@ -414,9 +404,7 @@ function ProblemCard({ problem, isGovOfficial }) {
                     : "hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <ThumbsUp
-                  className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`}
-                />
+                <ThumbsUp className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`} />
                 <span>{voteCount}</span>
               </Button>
             ) : (

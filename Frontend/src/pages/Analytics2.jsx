@@ -35,7 +35,7 @@ import { toast } from "sonner";
 
 const analyticsData = {
   totalIssues: 324,
-  resolvedIssues: 0,
+  resolvedIssues: 156,
   rejectedIssues: 48,
   inProgressIssues: 89,
   pendingReview: 31,
@@ -216,7 +216,7 @@ const calculateLastMonthStats = (data) => {
   ];
 };
 
-function Analytics() {
+function Analytics2() {
   const [data, setData] = useState({
     analytics: {},
     weekly: [],
@@ -264,25 +264,25 @@ function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Issues"
-          value={data.analytics.totalIssues || analyticsData.totalIssues}
+          value={analyticsData.totalIssues}
           icon={<Building2 className="h-5 w-5 text-blue-600" />}
           description="Total reported issues"
         />
         <StatCard
           title="Resolved Issues"
-          value={data.analytics.resolvedIssues || analyticsData.resolvedIssues}
+          value={analyticsData.resolvedIssues}
           icon={<CheckCircle className="h-5 w-5 text-emerald-600" />}
           description="Successfully resolved issues"
         />
         <StatCard
           title="In Progress"
-          value={data.analytics.inProgressIssues || analyticsData.inProgressIssues}
+          value={analyticsData.inProgressIssues}
           icon={<Construction className="h-5 w-5 text-indigo-600" />}
           description="Issues being addressed"
         />
         <StatCard
           title="Pending Review"
-          value={data.analytics.pendingReview || analyticsData.pendingReview}
+          value={analyticsData.pendingReview}
           icon={<AlertTriangle className="h-5 w-5 text-amber-600" />}
           description="Issues awaiting review"
         />
@@ -302,7 +302,7 @@ function Analytics() {
             <ResponsiveContainer width="100%" height={300}>
               {data?.lastMonth?.length > 0 ? (
                 <AreaChart
-                  data={data.lastMonth || analyticsData.lastMonthData}
+                  data={analyticsData.lastMonthData}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
                   <defs>
@@ -413,7 +413,7 @@ function Analytics() {
             <div className="h-[300px]">
               <ResponsiveContainer>
                 <BarChart
-                  data={data.categories.issueCategories || analyticsData.issueCategories}
+                  data={analyticsData.issueCategories}
                   layout="vertical"
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -561,4 +561,4 @@ function Analytics() {
   );
 }
 
-export default Analytics;
+export default Analytics2;

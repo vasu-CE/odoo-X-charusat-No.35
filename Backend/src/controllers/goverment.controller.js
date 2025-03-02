@@ -73,13 +73,21 @@ export const acceptProblem = async (req, res) => {
   try {
     const { problemId } = req.params;
 
+    const id = isNaN(problemId) ? problemId : Number(problemId);
+    console.log(id)
     const problem = await prisma.problem.update({
-      where: { id: Number(problemId) },
-      data: { status: "ACCEPTED" },
+      where: { id },
+      data: { status: "COMPLETED" },
     });
+
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
 
     res.json({ message: "Problem Completed successfully", problem });
   } catch (error) {
+    console.error("Error accepting problem:", error);
     res.status(500).json({ error: "Failed to accept problem" });
   }
 };
+

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, MessageCircle, ThumbsUp, BarChart2, Shield } from 'lucide-react'
 import MidPart from '@/components/MidPart'
+import { Link } from 'react-router-dom'
 
 export default function LandingPage() {
   return (
@@ -13,7 +14,9 @@ export default function LandingPage() {
           <h2 className="text-6xl text-center font-bold text-blue-700/90 mb-4 ">Report Public Issues, <br /> Improve Your City!</h2>
           <p className="text-xl text-gray-600 text-center mb-8">Civic Connect bridges the gap between citizens and local government, 
             making it easy to report issues,<br /> engage in community discussions, and drive positive change.</p>
-          <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white">Get Started</Button>
+            <Link to="/login" >
+            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white">Get Started</Button>
+            </Link>
         </section>
 
         <section id="features" className="mb-16">

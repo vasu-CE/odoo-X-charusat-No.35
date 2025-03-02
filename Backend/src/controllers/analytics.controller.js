@@ -47,7 +47,7 @@ export const leaderBoard = async ( req , res) => {
             });
             console.log(ReportedProblem)
             const avgRating = ratingCount > 0 ? totalRatings / ratingCount : 0;
-            const score = totalVotes + avgRating * 2 + coins * 3;
+            const score = totalVotes + avgRating + coins * 2;
         
             return {
               id: user.id,

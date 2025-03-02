@@ -11,6 +11,7 @@ function GetAllProblems() {
 
   useEffect(() => {
     const fetchProblems = async (latitude, longitude) => {
+      setLoading(true);
       try {
         const response = await axios.get(`${BASE_URL}/issue/all-problem`, {
           withCredentials: true,
@@ -18,7 +19,7 @@ function GetAllProblems() {
         });
 
         if (response.data.success) {
-          console.log(response.data);
+          console.log(response.data); // No need for extra {}
           dispatch(setProblems(response.data.message));
         }
       } catch (error) {
@@ -32,23 +33,21 @@ function GetAllProblems() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          fetchProblems(latitude, longitude); // Fetch problems with location
+          fetchProblems(latitude, longitude); // Fetch problems with user location
         },
-        (error) => {
-          fetchProblems(22.596720 , 72.834550)
+        () => {
           setError("Location access denied or unavailable");
-          setLoading(false);
+          fetchProblems(22.596720, 72.834550); // Default location
         }
       );
     } else {
-      fetchProblems(22.596720 , 72.834550)
       setError("Geolocation is not supported by your browser");
-      setLoading(false);
+      fetchProblems(22.596720, 72.834550); // Default location
     }
   }, [dispatch]);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
 
   return null; 
 }

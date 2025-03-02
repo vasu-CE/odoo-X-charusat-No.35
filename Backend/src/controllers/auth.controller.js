@@ -117,6 +117,22 @@ export const signup = async (req, res) => {
   }
 };
 
+export const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return res.status(200).json(new ApiResponse(200, "Logout successful"));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, err.message || "Internal server error"));
+  }
+};
+
+
 export const getProfile = async (req, res) => {
   try {
     const { userId } = req.params;

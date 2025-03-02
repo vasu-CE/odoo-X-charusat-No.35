@@ -8,6 +8,7 @@ import ReportIssue from "./components/ReportIssue";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import StorePage from "./pages/StorePage";
+import Analytics2 from "./pages/Analytics2";
 function App() {
   return (
     <Router>
@@ -22,6 +23,7 @@ function App() {
           <Route path="/report-issue" element={<ReportIssue />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/store-cart" element={<StorePage />} />
+          <Route path="/analytics2" element={<Analytics2 />} />
           
         </Routes>
       </div>
